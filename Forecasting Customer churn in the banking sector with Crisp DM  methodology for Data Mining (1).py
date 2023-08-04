@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
-
-
-
-# In[1]:
+# In[80]:
 
 
 #importing necessary libraries
@@ -17,7 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-# In[2]:
+# In[81]:
 
 
 #importing the dataset
@@ -91,23 +85,14 @@ churn_data.isnull().sum()
 churn_data.describe()
 
 
-# In[12]:
-
-
-#https://www.w3resource.com/pandas/dataframe/dataframe-describe.php
-churn_data.describe(include = 'all')
-
-
-# It displays all the columns of the data frame regardless of its datatype and the overall statistical values of the categorical and numerical columns.
-
-# In[13]:
+# In[82]:
 
 
 # Dropping inappropriate columns that is not required for this analysis
 churn_data.columns
 
 
-# In[14]:
+# In[83]:
 
 
 #https://www.listendata.com/2019/06/pandas-drop-columns-from-dataframe.html
@@ -116,12 +101,6 @@ churn_data = churn_data.drop(['RowNumber', 'CustomerId', 'Surname'],axis=1)
 
 
 # The irrelevant columns are dropped to reduce the memory usage and for the ease of analysis purposes
-
-# In[20]:
-
-
-churn_data.head()
-
 
 # In[15]:
 
@@ -139,17 +118,35 @@ churn_data.info()
 churn_data['Geography'].unique()
 
 
+# In[84]:
+
+
+churn_data['Gender'].unique()
+
+
 # unique() function is used to find the unique values in a series.
 # 
 # 
 
-# In[17]:
+# In[85]:
 
 
 # Encoding ctaegorical data
 # one hot/ dummy encoding
 # https://dataindependent.com/pandas/pandas-get-dummies-pd-get_dummies/
 churn_data = pd.get_dummies(churn_data, drop_first = True)
+
+
+# In[86]:
+
+
+churn_data
+
+
+# In[87]:
+
+
+churn_data.Exited.plot.hist()
 
 
 # In[19]:
@@ -160,6 +157,28 @@ churn_data['Exited'].value_counts()
 
 # Here value counts() function is used to find the distribution of targeted variable. The output will be sorted in the descending order with the firat element being the frequently occurring value. 0 means the customer is not leaving the bank and 1 means the customer is leaving the bank.
 # 
+
+# In[107]:
+
+
+churn_data1=churn_data.drop(columns='Exited')
+
+
+# In[111]:
+
+
+# Creating a correlation matrix between the independent an dresponse variable
+churn_data1.corrwith(churn_data['Exited']).plot.bar(figsize=(17,9), title='correlation With the exited variable', rot = 45,grid = True)
+
+
+# In[116]:
+
+
+# Creating a heat map
+corr=churn_data.corr()
+plt.figure(figsize=(17,9))
+sns.heatmap(corr,annot=True)
+
 
 # In[3]:
 
@@ -174,26 +193,117 @@ sns.countplot(churn_data['Exited'])
 From this count plot we can find that the target variable is unevenly distributed and we can see that the data is imbalanced.
 
 
-# In[11]:
+# In[5]:
 
 
 #importing train_test_split 
 # https://www.freecodecamp.org/news/what-is-stratified-random-sampling-definition-and-python-example/#:~:text=In%20machine%20learning%2C%20stratified%20sampling,here%20to%20download%20the%20dataset.
 from sklearn.model_selection import train_test_split
-# Storing the independent variable in X
-X = churn_data.drop('Exited',axis=1)
-# storing the target variable in Y
-Y = churn_data['Exited']
+# Storing the independent variable in A
+A = churn_data.drop(columns='Exited')
+# storing the target variable in churn_data2
+B = churn_data['Exited']
 
 
-# In[12]:
+# In[120]:
 
 
 # Splitting the dataset
 # https://www.freecodecamp.org/news/what-is-stratified-random-sampling-definition-and-python-example/#:~:text=In%20machine%20learning%2C%20stratified%20sampling,here%20to%20download%20the%20dataset.
 # https://towardsdatascience.com/why-do-we-set-a-random-state-in-machine-learning-models-bb2dc68d8431
 # https://www.askpython.com/python/examples/split-data-training-and-testing-set#:~:text=The%20most%20common%20split%20ratio,works%20well%20with%20large%20datasets.
-X_train,X_test,Y_train,Y_test=train_test_split(X,Y,test_size=0.2, random_state=42,stratify=Y)
+A_train, A_test, B_train, B_test = train_test_split(A, B, test_size=0.2, random_state=42)
+
+
+# It is vital to perform Feature scaling where all the variables are brought to a similar scale, as the features with high value range dominates in calculating the distances between data.
+
+# In[123]:
+
+
+A_train.shape
+
+
+# In[124]:
+
+
+from sklearn.preprocessing import StandardScaler
+
+
+# In[125]:
+
+
+scaler = StandardScaler()
+
+
+# In[127]:
+
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+A_train = scaler.fit_transform(A_train)
+A_test = scaler.transform(A_test)
+
+
+# In[128]:
+
+
+A_train
+
+
+# In[136]:
+
+
+# Analysis before SMOTE 
+# Logistic regression Model
+from sklearn.linear_model import LogisticRegression
+# Creating instance for this model
+logis = LogisticRegression()
+# train the model
+logis.fit(A_train,B_train)
+# Predict the model
+B_pred = logis.predict(A_test)
+
+
+# In[142]:
+
+
+# Checking accuracy before applying SMOTE
+# importing necessary libraries
+from sklearn.metrics import accuracy_score
+accuracy_score(B_test,B_pred)
+
+
+# In[144]:
+
+
+# Checking precision score before applying SMOTE
+# importing necessary libraries
+from sklearn.metrics import precision_score,recall_score,f1_score
+precision_score(B_test,B_pred)
+
+
+# In[145]:
+
+
+# Recall score before applying SMOTE
+recall_score(B_test,B_pred)
+
+
+# In[146]:
+
+
+# f1 score before applying SMOTE
+f1_score(B_test,B_pred)
+
+
+# In[3]:
+
+
+# Applying Oversampling with SMOTE
+# importing SMOTE
+from imblearn.over_sampling import SMOTE
+# Assigning in new variable
+A_new,B_new = SMOTE().fit_resample(A,B)
 
 
 # In[ ]:
